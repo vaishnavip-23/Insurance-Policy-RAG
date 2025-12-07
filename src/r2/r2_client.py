@@ -2,8 +2,9 @@
 1. upload_pdf – put raw PDF in R2
 2. parse_pdf – use presigned URL + LlamaParse → return markdown, page_map in memory
 3. upload_parsed_files – take markdown + page_map and store them in R2
-4. os.environ - we don't have to write the validation
-5. S3 is a storage API/protocol. A common language for object storage.
+4. Download stored markdown and page_map for a given doc_id from R2.
+5. os.environ - we don't have to write the validation
+6. S3 is a storage API/protocol. A common language for object storage.
 """
 import os
 import json
@@ -107,3 +108,19 @@ def upload_parsed_files(doc_id:str,markdown_text:str,page_map:Dict[str,Any]):
     )
 
     return markdown_key, page_map_key
+
+def download_parsed_files(doc_id: str) -> Tuple[str, Dict[str, Any]]:
+
+    base_prefix = f"documents/{doc_id}/"
+    markdown_key = base_prefix + "markdown.md"
+    page_map_key = base_prefix + "page_map.json"
+
+    # download markdown
+    md_obj = r2_client.get_object(Bucket=R2_BUCKET, Key=markdown_key)
+    markdown_text = md_obj["Body"].read().decode("utf-8")
+
+    # download page_map
+    page_map_obj = r2_client.get_object(Bucket=R2_BUCKET, Key=page_map_key)
+    page_map = json.loads(page_map_obj["Body"].read().decode("utf-8"))
+
+    return markdown_text, page_map
