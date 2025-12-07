@@ -3,7 +3,7 @@
 2. parse_pdf – use presigned URL + LlamaParse → return markdown, page_map in memory
 3. upload_parsed_files – take markdown + page_map and store them in R2
 4. os.environ - we don't have to write the validation
-5. S3 is a storage API/protocol, not AWS itself. A common language for object storage.
+5. S3 is a storage API/protocol. A common language for object storage.
 """
 import os
 import json
