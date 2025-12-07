@@ -1,0 +1,12 @@
+[project]
+name = "insurance-policy-rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "boto3>=1.42.4",
+    "botocore>=1.42.4",
+    "llama-parse>=0.6.88",
+    "python-dotenv>=1.2.1",
+]
