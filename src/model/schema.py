@@ -7,3 +7,4 @@ class Chunk(BaseModel):
     end_offset: int = Field(..., description="End char offset in full document")
     page_start: int = Field(..., description="First page covered by this chunk")
     page_end: int = Field(..., description="Last page covered by this chunk")
+    chunk_summary: str = Field(default="", description="2-sentence summary of chunk content")
