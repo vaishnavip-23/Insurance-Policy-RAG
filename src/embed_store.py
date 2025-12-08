@@ -38,7 +38,8 @@ def embed_and_store(chunks: List[Chunk]):
             "page_end": chunk.page_end,
             "start_offset": chunk.start_offset,
             "end_offset": chunk.end_offset,
-            "text": chunk.text
+            "text": chunk.text,
+            "chunk_summary": chunk.chunk_summary
         })
     
     # Store in ChromaDB
