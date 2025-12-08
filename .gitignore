@@ -3,3 +3,4 @@
 for rag.pdf
 __pycache__/
 documents_hdfc_ergo_arogya_2024_markdown.md
+chroma_db/
