@@ -5,7 +5,7 @@ doc_id = "hdfc_ergo_arogya_2024"
 
 # 1) upload raw PDF
 print(f"Uploading PDF for {doc_id}...")
-pdf_key = upload_pdf("../for rag.pdf", doc_id)
+pdf_key = upload_pdf("../../for rag.pdf", doc_id)
 print(f"✓ Uploaded to: {pdf_key}")
 
 # 2) parse from R2 → markdown + page_map in memory

@@ -79,12 +79,19 @@ def parse_pdf(doc_id:str)->Tuple[str,Dict[str,Any]]:
     markdown_text = "\n\n".join(d.text for d in docs)
 
     page_map = {}
+    running_offset = 0  # cumulative character offset across pages
     for i, d in enumerate(docs):
+        doc_text_len = len(d.text) if hasattr(d, "text") else 0
+        start_offset = running_offset
+        end_offset = start_offset + doc_text_len - 1 if doc_text_len else start_offset
         page_map[i] = {
             "page": i + 1,
             "document_index": i,
-            "text_length": len(d.text) if hasattr(d, 'text') else 0
+            "text_length": doc_text_len,
+            "start_offset": start_offset,
+            "end_offset": end_offset
         }
+        running_offset += doc_text_len
     
     return markdown_text, page_map
 
