@@ -16,13 +16,13 @@ collection = chroma_client.get_or_create_collection(name="vector_store")
 
 
 def embed_and_store(chunks: List[Chunk]):
-    # Extract texts from chunks
-    texts = [chunk.text for chunk in chunks]
+    # Extract summaries for embedding (dense retrieval)
+    summaries = [chunk.chunk_summary for chunk in chunks]
     
-    # Create embeddings using OpenAI
+    # Create embeddings using OpenAI on summaries
     response = openai_client.embeddings.create(
         model="text-embedding-3-small",
-        input=texts
+        input=summaries
     )
     embeddings = [item.embedding for item in response.data]
     
@@ -31,7 +31,7 @@ def embed_and_store(chunks: List[Chunk]):
     metadatas = []
     
     for chunk in chunks:
-        ids.append(str(chunk.chunk_id))
+        ids.append(str(chunk.chunk_id)) #chroma requires ids to be strings
         metadatas.append({
             "chunk_id": chunk.chunk_id,
             "page_start": chunk.page_start,
@@ -42,12 +42,11 @@ def embed_and_store(chunks: List[Chunk]):
             "chunk_summary": chunk.chunk_summary
         })
     
-    # Store in ChromaDB
+    # Store in ChromaDB (embeddings are from summaries)
     collection.add(
         ids=ids,
         embeddings=embeddings,
-        documents=texts,
-        metadatas=metadatas
+        metadatas=metadatas  # Metadata has everything: full text, summary, citations
     )
     
-    print(f"Stored {len(chunks)} chunks in vector_store")
+    print(f"Stored {len(chunks)} chunks in vector_store (embedded summaries)")
