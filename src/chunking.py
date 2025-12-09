@@ -83,11 +83,7 @@ async def chunking_markdown(markdown_text, page_map) -> List[Chunk]:
 
 async def summarize_single_text(text: str) -> str:
     """Generate summary for a single text using OpenAI Responses API."""
-    prompt = (
-        "Write 2 sentences summarizing the main information in this text to help answer user questions. "
-        "Explicitly preserve important policy keywords/terms (e.g., exclusions, waiting periods, pre-existing, codes) "
-        "from the text so they remain searchable for retrieval."
-    )
+    prompt = "Write 2 sentences summarizing the main information in this text that would help answer user questions."
     input_text = f"{prompt}\n\nText: {text}"
     
     response = await openai_client.responses.create(

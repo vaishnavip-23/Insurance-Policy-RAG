@@ -29,7 +29,7 @@ class RetrievalChunk(BaseModel): #Individual chunk result from dense/sparse
 
 class QueryRetrievalResult(BaseModel): #Result for ONE question using RetrievalChunk
     question: str = Field(..., description="Query question text")
-    chunks: List[RetrievalChunk] = Field(..., min_length=5, max_length=5, description="Top 5 retrieved chunks for this query")
+    chunks: List[RetrievalChunk] = Field(..., min_length=5, max_length=15, description="Top retrieved chunks for this query (up to 15)")
 
 class DenseRetrievalResults(BaseModel): #Results for ALL 4 questions (1 original + 3 variations)
     results: List[QueryRetrievalResult] = Field(..., min_length=4, max_length=4, description="Results for all 4 queries (1 original + 3 variations)")
