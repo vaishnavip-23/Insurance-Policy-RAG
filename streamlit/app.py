@@ -1,0 +1,122 @@
+import streamlit as st
+import sys
+sys.path.append('/Users/vaishnavipullakhandam/Desktop/github/Insurance Policy RAG/src')
+
+from retrieval import hybrid_retrieval, merge_and_rerank
+from answer_gen import generate_answer
+
+# Page config
+st.set_page_config(
+    page_title="Insurance Policy RAG",
+    page_icon="📄",
+    layout="wide"
+)
+
+# Title
+st.title("📄 Insurance Policy RAG Assistant")
+st.markdown("Ask questions about your insurance policy and get accurate answers with citations.")
+
+# Initialize session state for chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        if message["role"] == "assistant" and "citations" in message:
+            with st.expander("📚 View Citations"):
+                for i, citation in enumerate(message["citations"], 1):
+                    st.markdown(f"**{i}.** Chunk {citation['chunk_id']} (Pages {citation['page_start']}-{citation['page_end']})")
+            if "confidence" in message:
+                confidence_color = {
+                    "high": "🟢",
+                    "medium": "🟡",
+                    "low": "🔴"
+                }
+                st.caption(f"{confidence_color.get(message['confidence'], '⚪')} Confidence: {message['confidence']}")
+
+# Chat input
+if query := st.chat_input("Ask a question about your insurance policy..."):
+    # Add user message to chat
+    st.session_state.messages.append({"role": "user", "content": query})
+    with st.chat_message("user"):
+        st.markdown(query)
+    
+    # Generate response
+    with st.chat_message("assistant"):
+        with st.spinner("🔍 Searching policy... (Query translation → Hybrid retrieval → Reranking → Answer generation)"):
+            try:
+                # Step 1: Hybrid retrieval
+                dense_results, sparse_results = hybrid_retrieval(query)
+                
+                # Step 2: Merge and rerank
+                final_results = merge_and_rerank(dense_results, sparse_results, top_k=10)
+                
+                # Step 3: Generate answer
+                answer = generate_answer(query, final_results)
+                
+                # Display answer
+                st.markdown(answer.answer)
+                
+                # Add to chat history
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": answer.answer,
+                    "citations": [
+                        {
+                            "chunk_id": c.chunk_id,
+                            "page_start": c.page_start,
+                            "page_end": c.page_end
+                        } for c in answer.citations
+                    ],
+                    "confidence": answer.confidence
+                })
+                
+                # Display citations
+                with st.expander("📚 View Citations"):
+                    for i, citation in enumerate(answer.citations, 1):
+                        st.markdown(f"**{i}.** Chunk {citation.chunk_id} (Pages {citation.page_start}-{citation.page_end})")
+                
+                # Display confidence
+                confidence_color = {
+                    "high": "🟢",
+                    "medium": "🟡",
+                    "low": "🔴"
+                }
+                st.caption(f"{confidence_color.get(answer.confidence, '⚪')} Confidence: {answer.confidence}")
+                
+                # Display retrieval stats in sidebar
+                with st.sidebar:
+                    st.subheader("📊 Retrieval Stats")
+                    st.metric("Chunks Retrieved", final_results.total_before_dedup)
+                    st.metric("Unique Chunks", final_results.total_after_dedup)
+                    st.metric("Top Chunks Used", len(final_results.chunks))
+                    
+                    with st.expander("🔍 View Retrieved Chunks"):
+                        for i, chunk in enumerate(final_results.chunks, 1):
+                            sources_str = " + ".join(chunk.sources)
+                            st.markdown(f"**{i}. Chunk {chunk.chunk_id}**")
+                            st.caption(f"RRF Score: {chunk.rrf_score} | Sources: {sources_str} | Pages: {chunk.page_start}-{chunk.page_end}")
+                            st.text(chunk.text[:200] + "...")
+                            st.divider()
+                
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+                st.exception(e)
+
+# Sidebar
+with st.sidebar:
+    st.header("ℹ️ About")
+    st.markdown("""
+    This RAG system uses:
+    - **Query Translation**: Generates multiple query variations
+    - **Dense Retrieval**: Semantic search on chunk summaries
+    - **Sparse Retrieval**: BM25 keyword search on full text
+    - **RRF Reranking**: Reciprocal Rank Fusion for merging results
+    - **LLM Answer Generation**: GPT-5-mini with citations
+    """)
+    
+    if st.button("🗑️ Clear Chat History"):
+        st.session_state.messages = []
+        st.rerun()

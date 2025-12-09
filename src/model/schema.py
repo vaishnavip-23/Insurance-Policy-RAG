@@ -20,10 +20,10 @@ class FinalQueries(BaseModel):
     original_query: str = Field(..., description="Original user query")
     variations: List[str] = Field(..., min_length=3, max_length=3, description="3 query variations")
 
-class RetrievalChunk(BaseModel): #Individual chunk result
+class RetrievalChunk(BaseModel): #Individual chunk result from dense/sparse
     chunk_id: int = Field(..., description="Chunk ID")
     text: str = Field(..., description="Full chunk text")
-    similarity_score: float = Field(..., description="Similarity score from vector search")
+    similarity_score: float = Field(..., description="Similarity/BM25 score")
     page_start: int = Field(..., description="Starting page number")
     page_end: int = Field(..., description="Ending page number")
 
@@ -36,3 +36,28 @@ class DenseRetrievalResults(BaseModel): #Results for ALL 4 questions (1 original
 
 class SparseRetrievalResults(BaseModel): #Results for ALL 4 questions using BM25
     results: List[QueryRetrievalResult] = Field(..., min_length=4, max_length=4, description="Results for all 4 queries (1 original + 3 variations)")
+
+class RankedChunk(BaseModel): #Final ranked chunk after RRF
+    chunk_id: int = Field(..., description="Chunk ID")
+    text: str = Field(..., description="Full chunk text")
+    chunk_summary: str = Field(..., description="Chunk summary")
+    page_start: int = Field(..., description="Starting page number")
+    page_end: int = Field(..., description="Ending page number")
+    rrf_score: float = Field(..., description="Reciprocal Rank Fusion score")
+    appearances: int = Field(..., description="Number of times chunk appeared in results")
+    sources: List[str] = Field(..., description="Retrieval sources: dense, sparse, or both")
+
+class FinalRankedResults(BaseModel): #Final results after RRF merge and deduplication
+    chunks: List[RankedChunk] = Field(..., description="Top ranked chunks after RRF")
+    total_before_dedup: int = Field(..., description="Total chunks before deduplication")
+    total_after_dedup: int = Field(..., description="Total unique chunks after deduplication")
+
+class Citation(BaseModel): #Individual citation reference
+    chunk_id: int = Field(..., description="Chunk ID used for this citation")
+    page_start: int = Field(..., description="Starting page number")
+    page_end: int = Field(..., description="Ending page number")
+
+class Answer(BaseModel): #Final answer with citations
+    answer: str = Field(..., description="Comprehensive answer to the user's query based on retrieved chunks")
+    citations: List[Citation] = Field(..., description="Citations used in the answer")
+    confidence: str = Field(..., description="Confidence level: high, medium, or low")
