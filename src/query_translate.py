@@ -25,6 +25,7 @@ def query_translate(query: str) -> FinalQueries:
     - Do NOT introduce new facts.
     - Do NOT answer the query.
     - Each variation should be a standalone search query.
+    - You can introduce new keywords which might help with the retrieval process.
 
     Return only the list of rewritten queries.
 

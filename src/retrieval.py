@@ -65,7 +65,7 @@ def dense_retrieval(all_queries: List[str]) -> DenseRetrievalResults:
         # Search ChromaDB (which has summary embeddings)
         search_results = collection.query(
             query_embeddings=[query_embedding],
-            n_results=5,
+            n_results=15,
             include=["metadatas", "distances"]
         )
         
@@ -118,7 +118,7 @@ def sparse_retrieval(all_queries: List[str]) -> SparseRetrievalResults:
         scores = bm25_index.get_scores(tokenized_query)
         
         # Get top 5 indices
-        top_k_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:5]
+        top_k_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:15]
         
         # Convert to RetrievalChunk objects
         chunks = []
@@ -150,7 +150,7 @@ def sparse_retrieval(all_queries: List[str]) -> SparseRetrievalResults:
 
 # MERGE AND RERANK USING RRF
 
-def merge_and_rerank(dense_results: DenseRetrievalResults, sparse_results: SparseRetrievalResults, top_k: int = 10) -> FinalRankedResults:
+def merge_and_rerank(dense_results: DenseRetrievalResults, sparse_results: SparseRetrievalResults, top_k: int = 15) -> FinalRankedResults:
     """
     Merge dense and sparse results using Reciprocal Rank Fusion (RRF).
     Deduplicates by chunk_id and reranks by combined RRF score.
