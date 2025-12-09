@@ -33,3 +33,6 @@ class QueryRetrievalResult(BaseModel): #Result for ONE question using RetrievalC
 
 class DenseRetrievalResults(BaseModel): #Results for ALL 4 questions (1 original + 3 variations)
     results: List[QueryRetrievalResult] = Field(..., min_length=4, max_length=4, description="Results for all 4 queries (1 original + 3 variations)")
+
+class SparseRetrievalResults(BaseModel): #Results for ALL 4 questions using BM25
+    results: List[QueryRetrievalResult] = Field(..., min_length=4, max_length=4, description="Results for all 4 queries (1 original + 3 variations)")
