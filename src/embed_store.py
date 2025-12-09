@@ -12,7 +12,10 @@ openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Initialize ChromaDB (local, persistent)
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="vector_store")
+collection = chroma_client.get_or_create_collection(
+    name="vector_store",
+    metadata={"hnsw:space": "cosine"}  # Use cosine similarity
+)
 
 
 def embed_and_store(chunks: List[Chunk]):
