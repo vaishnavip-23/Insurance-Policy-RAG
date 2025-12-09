@@ -1,6 +1,10 @@
 import streamlit as st
 import sys
-sys.path.append('/Users/vaishnavipullakhandam/Desktop/github/Insurance Policy RAG/src')
+from pathlib import Path
+
+# Add project src/ to path dynamically (works in local and container runs)
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT / "src"))
 
 from retrieval import hybrid_retrieval, merge_and_rerank
 from answer_gen import generate_answer
