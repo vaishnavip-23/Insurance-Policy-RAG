@@ -45,65 +45,59 @@ if query := st.chat_input("Ask a question about your insurance policy..."):
     
     # Generate response
     with st.chat_message("assistant"):
-        with st.spinner("🔍 Searching policy... (Query translation → Hybrid retrieval → Reranking → Answer generation)"):
-            try:
-                # Step 1: Hybrid retrieval
+        try:
+            with st.status("Running pipeline...", expanded=True) as status:
+                status.write("Translating query and running dense + BM25 retrieval...")
                 dense_results, sparse_results = hybrid_retrieval(query)
                 
-                # Step 2: Merge and rerank
+                status.write("Merging and reranking results (RRF)...")
                 final_results = merge_and_rerank(dense_results, sparse_results, top_k=10)
                 
-                # Step 3: Generate answer
+                status.write("Generating answer with inline citations...")
                 answer = generate_answer(query, final_results)
+                status.update(label="Done", state="complete")
+            
+            # Display answer (includes inline citations)
+            st.markdown(answer.answer)
+            
+            # Add to chat history
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": answer.answer,
+                "citations": [
+                    {
+                        "chunk_id": c.chunk_id,
+                        "page_start": c.page_start,
+                        "page_end": c.page_end
+                    } for c in answer.citations
+                ],
+                "confidence": answer.confidence
+            })
+            
+            # Display citations
+            with st.expander("📚 View Citations"):
+                for i, citation in enumerate(answer.citations, 1):
+                    st.markdown(f"**{i}.** Chunk {citation.chunk_id} (Pages {citation.page_start}-{citation.page_end})")
+            
+            # Display retrieval stats and confidence in sidebar
+            with st.sidebar:
+                st.subheader("📊 Retrieval Stats")
+                st.metric("Chunks Retrieved", final_results.total_before_dedup)
+                st.metric("Unique Chunks", final_results.total_after_dedup)
+                st.metric("Top Chunks Used", len(final_results.chunks))
+                st.caption(f"Confidence: {answer.confidence}")
                 
-                # Display answer
-                st.markdown(answer.answer)
-                
-                # Add to chat history
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": answer.answer,
-                    "citations": [
-                        {
-                            "chunk_id": c.chunk_id,
-                            "page_start": c.page_start,
-                            "page_end": c.page_end
-                        } for c in answer.citations
-                    ],
-                    "confidence": answer.confidence
-                })
-                
-                # Display citations
-                with st.expander("📚 View Citations"):
-                    for i, citation in enumerate(answer.citations, 1):
-                        st.markdown(f"**{i}.** Chunk {citation.chunk_id} (Pages {citation.page_start}-{citation.page_end})")
-                
-                # Display confidence
-                confidence_color = {
-                    "high": "🟢",
-                    "medium": "🟡",
-                    "low": "🔴"
-                }
-                st.caption(f"{confidence_color.get(answer.confidence, '⚪')} Confidence: {answer.confidence}")
-                
-                # Display retrieval stats in sidebar
-                with st.sidebar:
-                    st.subheader("📊 Retrieval Stats")
-                    st.metric("Chunks Retrieved", final_results.total_before_dedup)
-                    st.metric("Unique Chunks", final_results.total_after_dedup)
-                    st.metric("Top Chunks Used", len(final_results.chunks))
-                    
-                    with st.expander("🔍 View Retrieved Chunks"):
-                        for i, chunk in enumerate(final_results.chunks, 1):
-                            sources_str = " + ".join(chunk.sources)
-                            st.markdown(f"**{i}. Chunk {chunk.chunk_id}**")
-                            st.caption(f"RRF Score: {chunk.rrf_score} | Sources: {sources_str} | Pages: {chunk.page_start}-{chunk.page_end}")
-                            st.text(chunk.text[:200] + "...")
-                            st.divider()
-                
-            except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
-                st.exception(e)
+                with st.expander("🔍 View Retrieved Chunks"):
+                    for i, chunk in enumerate(final_results.chunks, 1):
+                        sources_str = " + ".join(chunk.sources)
+                        st.markdown(f"**{i}. Chunk {chunk.chunk_id}**")
+                        st.caption(f"RRF Score: {chunk.rrf_score} | Sources: {sources_str} | Pages: {chunk.page_start}-{chunk.page_end}")
+                        st.text(chunk.text[:200] + "...")
+                        st.divider()
+        
+        except Exception as e:
+            st.error(f"❌ Error: {str(e)}")
+            st.exception(e)
 
 # Sidebar
 with st.sidebar:
